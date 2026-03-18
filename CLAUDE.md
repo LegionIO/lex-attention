@@ -11,7 +11,7 @@ Selective attention filter for brain-modeled agentic AI. Models the thalamic ret
 ## Gem Info
 
 - **Gem name**: `lex-attention`
-- **Version**: `0.1.0`
+- **Version**: `0.1.1`
 - **Module**: `Legion::Extensions::Attention`
 - **Ruby**: `>= 3.4`
 - **License**: MIT
@@ -83,3 +83,4 @@ This extension is the signal pre-processor for lex-tick. It should be called at 
 - Overflow from spotlight (> 7) demotes to peripheral rather than dropping
 - Deduplication in `Focus.deduplicate` prevents the same domain from flooding the spotlight
 - `habituation_model.decay_all` is called inside `filter_signals` — every signal filtering tick also decays habituation
+- Signals with intrinsic salience below `MINIMUM_THRESHOLD` (0.05) are pre-filtered before scoring — they don't build habituation or consume scoring cycles

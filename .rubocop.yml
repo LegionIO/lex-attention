@@ -39,6 +39,9 @@ Metrics/PerceivedComplexity:
 Metrics/ParameterLists:
   Max: 8
 
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
 Style/Documentation:
   Enabled: false
 

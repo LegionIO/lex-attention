@@ -21,12 +21,14 @@ module Legion
                                   "(spotlight=#{categorized[:spotlight].size} peripheral=#{categorized[:peripheral].size} " \
                                   "background=#{categorized[:background].size} dropped=#{categorized[:dropped]})"
 
+            total_dropped = categorized[:dropped] + (@pre_filter_dropped || 0)
+
             {
               filtered:   categorized[:spotlight] + categorized[:peripheral],
               spotlight:  categorized[:spotlight].size,
               peripheral: categorized[:peripheral].size,
               background: categorized[:background].size,
-              dropped:    categorized[:dropped]
+              dropped:    total_dropped
             }
           end
 
@@ -67,6 +69,15 @@ module Legion
           end
 
           def score_all(signals, active_wonders)
+            @pre_filter_dropped = 0
+            signals = signals.reject do |signal|
+              salience = Helpers::Focus.extract_salience(signal)
+              if salience < Helpers::Constants::MINIMUM_THRESHOLD
+                @pre_filter_dropped += 1
+                true
+              end
+            end
+
             signals.map do |signal|
               domain = Helpers::Focus.extract_domain(signal)
               habituation_model.record(domain)

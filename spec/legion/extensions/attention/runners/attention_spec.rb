@@ -29,8 +29,35 @@ RSpec.describe Legion::Extensions::Attention::Runners::Attention do
     it 'drops low-salience signals' do
       signals = [{ salience: 0.01, domain: :heartbeat, novelty: 0.0 }]
       result = client.filter_signals(signals: signals)
-      expect(result[:dropped]).to be >= 0
-      expect(result[:filtered].size).to be <= 1
+      expect(result[:dropped]).to be >= 1
+      expect(result[:filtered]).to be_empty
+    end
+
+    it 'pre-filters signals below MINIMUM_THRESHOLD before scoring' do
+      signals = [
+        { salience: 0.01, domain: :noise, novelty: 0.0 },
+        { salience: 0.8, domain: :real, novelty: 0.5 }
+      ]
+      result = client.filter_signals(signals: signals)
+      expect(result[:dropped]).to be >= 1
+      expect(result[:filtered].map { |s| s[:domain] }).to include(:real)
+      expect(result[:filtered].map { |s| s[:domain] }).not_to include(:noise)
+    end
+
+    it 'does not pre-filter signals at exactly MINIMUM_THRESHOLD' do
+      threshold = Legion::Extensions::Attention::Helpers::Constants::MINIMUM_THRESHOLD
+      signals = [{ salience: threshold, domain: :borderline, novelty: 0.5 }]
+      result = client.filter_signals(signals: signals)
+      # signal at threshold should not be pre-filtered (may still end up background or dropped by scoring)
+      expect(result[:dropped]).to eq(0).or(eq(1))
+    end
+
+    it 'does not build habituation for pre-filtered signals' do
+      fresh = Legion::Extensions::Attention::Client.new
+      noise = [{ salience: 0.01, domain: :spam, novelty: 0.0 }]
+      5.times { fresh.filter_signals(signals: noise) }
+      stats = fresh.habituation_stats
+      expect(stats[:domains]).not_to have_key(:spam)
     end
 
     it 'boosts signals matching active wonders' do
